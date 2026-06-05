@@ -45,7 +45,12 @@
         <a href="/admin"
           class="px-4 py-2 font-medium text-sm text-neutral-600 dark:text-neutral-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Admin
           Panel</a>
+        <a href="/collections"
+          class="px-4 py-2 font-medium text-sm text-neutral-600 dark:text-neutral-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Collections</a>
         <div class="w-px h-4 bg-neutral-200 dark:bg-neutral-700 mx-2"></div>
+        <form action="/user/logout" method="post">
+          <button type="submit" class="px-4 py-2 font-medium text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors">Logout</button>
+        </form>
         <button class="btn-icon" onclick="toggleTheme()" title="Toggle Theme">
           <i class="fas h-4 w-4 fa-moon dark:!hidden"></i>
           <i class="fas h-4 w-4 fa-sun !hidden dark:!block"></i>
@@ -70,6 +75,16 @@
           class="p-3 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-200 font-medium transition-colors">
           <i class="fas fa-cog w-6"></i> Admin Panel
         </a>
+        <a href="/collections"
+          class="p-3 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-200 font-medium transition-colors">
+          <i class="fas fa-folder w-6"></i> Collections
+        </a>
+        <form action="/user/logout" method="post">
+          <button type="submit"
+            class="p-3 w-full text-left flex items-center rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800 text-red-600 dark:text-red-400 font-medium transition-colors">
+            <i class="fas fa-sign-out-alt w-6"></i> Logout
+          </button>
+        </form>
         <button
           class="p-3 w-full text-left flex items-center rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-200 font-medium transition-colors"
           onclick="toggleTheme()">

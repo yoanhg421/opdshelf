@@ -20,23 +20,29 @@
 
 🚀 **Simple & Fast**
 - Powered by **Bun** for high performance
-- No database required
+- SQLite database for collections and metadata
 - Minimal resource usage
 
 📚 **Full Format Support**
 - EPUB, PDF, FB2, MOBI, AZW, CBZ, CBR, DJVU, RTF, TXT
 - Automatic cover extraction
 - Recursive directory scanning
+- **Metadata extraction**: Book titles extracted from EPUB metadata
 
 🖥️ **Modern Web UI**
 - Drag-and-drop uploads
 - Responsive admin panel
 - Dark mode support
+- **Collections/Shelves**: Organize books into custom collections
+- **Search**: Client-side search in admin panel
 
 📱 **OPDS Compatible**
 - Works with any OPDS reader (Moon+ Reader, KOReader, Calibre, etc.)
 - OPDS 1.x feed
 - **Dynamic Sorting**: Order your feed by name or date via URL parameters
+- **Search support**: OpenSearch protocol for OPDS readers
+- **Collections in OPDS**: Browse collections via OPDS feed
+- **Default sorting**: Title A-Z (configurable via URL)
 
 ---
 
@@ -45,12 +51,29 @@
 ### Sorting
 Both the Admin UI and the OPDS feed support sorting. In the OPDS feed, use the `sort` query parameter:
 
-- **Name (A-Z)**: `?sort=name-asc`
+- **Name (A-Z)**: `?sort=name-asc` (Default)
 - **Name (Z-A)**: `?sort=name-desc`
-- **Newest First** (Default): `?sort=date-desc`
+- **Newest First**: `?sort=date-desc`
 - **Oldest First**: `?sort=date-asc`
 
 Example: `http://localhost:3000/?sort=name-asc`
+
+### Search
+Search is supported in both the Admin UI and OPDS feed:
+
+- **Admin UI**: Use the search box to filter books by title
+- **OPDS Feed**: Use the `search` query parameter: `?search=keyword`
+- **OpenSearch**: OPDS readers can discover search capabilities via the OpenSearch description at `/opensearch.xml`
+
+Example: `http://localhost:3000/?search=harry`
+
+### Collections
+Organize your books into custom collections:
+
+- **Web UI**: Create collections via the Collections page in the admin panel
+- **OPDS Feed**: Browse collections at `/collections/opds`
+- **Collection Feed**: Each collection has its own OPDS feed at `/collections/{id}/opds`
+- **Management**: Add/remove books from collections through the web interface
 
 ---
 
