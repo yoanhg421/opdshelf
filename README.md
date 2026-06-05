@@ -27,20 +27,28 @@
 - EPUB, PDF, FB2, MOBI, AZW, CBZ, CBR, DJVU, RTF, TXT
 - Automatic cover extraction
 - Recursive directory scanning
-- **Metadata extraction**: Book titles extracted from EPUB metadata
+- **Enhanced metadata extraction**: Title, author, description, publisher, language, identifier, subject, series, and series index from EPUB metadata
+- **Calibre metadata support**: Extracts series information from Calibre-formatted EPUBs
 
 🖥️ **Modern Web UI**
-- Drag-and-drop uploads
+- Drag-and-drop uploads in modal
 - Responsive admin panel
 - Dark mode support
 - **Collections/Shelves**: Organize books into custom collections
-- **Search**: Client-side search in admin panel
+- **Enhanced search**: Search by title, author, subject, and series
+- **Book details modal**: View book details without leaving the page
+- **Context menu**: Quick access to edit metadata and delete actions
+- **Metadata editing**: Edit book metadata with WYSIWYG HTML editor for descriptions
+- **Source code view**: Edit raw HTML for descriptions
 
 📱 **OPDS Compatible**
 - Works with any OPDS reader (Moon+ Reader, KOReader, Calibre, etc.)
 - OPDS 1.x feed
 - **Dynamic Sorting**: Order your feed by name or date via URL parameters
-- **Search support**: OpenSearch protocol for OPDS readers
+- **Enhanced search**: Search by title and author
+- **OpenSearch support**: OPDS readers can discover search capabilities
+- **Rich metadata**: Subject/genre categories, series information with positions
+- **Thumbnail support**: Cover images with dimensions
 - **Collections in OPDS**: Browse collections via OPDS feed
 - **Default sorting**: Title A-Z (configurable via URL)
 
@@ -61,8 +69,8 @@ Example: `http://localhost:3000/?sort=name-asc`
 ### Search
 Search is supported in both the Admin UI and OPDS feed:
 
-- **Admin UI**: Use the search box to filter books by title
-- **OPDS Feed**: Use the `search` query parameter: `?search=keyword`
+- **Admin UI**: Use the search box to filter books by title, author, subject, and series
+- **OPDS Feed**: Use the `search` query parameter to search by title and author: `?search=keyword`
 - **OpenSearch**: OPDS readers can discover search capabilities via the OpenSearch description at `/opensearch.xml`
 
 Example: `http://localhost:3000/?search=harry`
@@ -74,6 +82,14 @@ Organize your books into custom collections:
 - **OPDS Feed**: Browse collections at `/collections/opds`
 - **Collection Feed**: Each collection has its own OPDS feed at `/collections/{id}/opds`
 - **Management**: Add/remove books from collections through the web interface
+
+### Metadata Editing
+Edit book metadata directly from the admin panel:
+
+- **Edit Metadata**: Click the three-dot menu on any book card and select "Edit Metadata"
+- **Rich Text Editor**: Edit descriptions with WYSIWYG formatting (bold, italic, underline, headings)
+- **Source View**: Toggle to edit raw HTML for descriptions
+- **All Fields**: Title, author, description, publisher, language, identifier, subject, series, and series index
 
 ---
 
@@ -90,6 +106,8 @@ services:
       - "3000:3000"
     volumes:
       - ./books:/app/books
+      - ./covers:/app/covers
+      - ./data:/app/data
     restart: unless-stopped
 ```
 
