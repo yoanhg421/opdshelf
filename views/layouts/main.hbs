@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="light">
+<html lang="en" data-theme="light">
 
 <head>
   <meta charset="UTF-8" />
@@ -47,6 +47,8 @@
           Panel</a>
         <a href="/collections"
           class="px-4 py-2 font-medium text-sm text-neutral-600 dark:text-neutral-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Collections</a>
+        <a href="/settings"
+          class="px-4 py-2 font-medium text-sm text-neutral-600 dark:text-neutral-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Settings</a>
         <div class="w-px h-4 bg-neutral-200 dark:bg-neutral-700 mx-2"></div>
         <form action="/user/logout" method="post">
           <button type="submit" class="px-4 py-2 font-medium text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors">Logout</button>
@@ -78,6 +80,10 @@
         <a href="/collections"
           class="p-3 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-200 font-medium transition-colors">
           <i class="fas fa-folder w-6"></i> Collections
+        </a>
+        <a href="/settings"
+          class="p-3 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-200 font-medium transition-colors">
+          <i class="fas fa-cog w-6"></i> Settings
         </a>
         <form action="/user/logout" method="post">
           <button type="submit"

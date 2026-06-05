@@ -1,0 +1,172 @@
+<div class="space-y-8 animate-fade-in-up">
+  <div>
+    <h1 class="text-3xl font-bold text-neutral-900 dark:text-white mb-2">Settings</h1>
+    <p class="text-neutral-600 dark:text-neutral-400">Manage your OPDShelf configuration</p>
+  </div>
+
+  <!-- Metadata Re-extraction -->
+  <div class="theme-card p-6 rounded-xl">
+    <h2 class="text-xl font-bold text-neutral-900 dark:text-white mb-4">Metadata Re-extraction</h2>
+    <p class="text-neutral-600 dark:text-neutral-400 mb-4">
+      Re-extract metadata from all EPUB files. This will update title, author, description, publisher, language, identifier, subject, series, and series index information from the EPUB files.
+    </p>
+    <div class="flex items-center gap-4">
+      <button onclick="reextractMetadata()" id="reextractBtn" class="btn-primary">
+        <i class="fas fa-sync-alt mr-2"></i> Re-extract Metadata
+      </button>
+      <span id="reextractStatus" class="text-sm text-neutral-600 dark:text-neutral-400"></span>
+    </div>
+  </div>
+
+  <!-- Series Collections -->
+  <div class="theme-card p-6 rounded-xl">
+    <h2 class="text-xl font-bold text-neutral-900 dark:text-white mb-4">Series Collections</h2>
+    <p class="text-neutral-600 dark:text-neutral-400 mb-4">
+      Automatically create collections from book series, or clean up single-book collections.
+    </p>
+    <div class="flex items-center gap-4">
+      <button onclick="syncSeries()" id="syncBtn" class="btn-primary">
+        <i class="fas fa-sync-alt mr-2"></i> Sync Series to Collections
+      </button>
+      <button onclick="cleanupCollections()" id="cleanupBtn" class="btn-primary bg-red-600 hover:bg-red-700">
+        <i class="fas fa-trash-alt mr-2"></i> Cleanup Single Books
+      </button>
+      <span id="seriesStatus" class="text-sm text-neutral-600 dark:text-neutral-400"></span>
+    </div>
+  </div>
+
+  <!-- Server Info -->
+  <div class="theme-card p-6 rounded-xl">
+    <h2 class="text-xl font-bold text-neutral-900 dark:text-white mb-4">Server Information</h2>
+    <div class="space-y-2 text-sm">
+      <div class="flex justify-between">
+        <span class="text-neutral-600 dark:text-neutral-400">Books Directory:</span>
+        <span class="text-neutral-900 dark:text-white font-mono">./books</span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-neutral-600 dark:text-neutral-400">Covers Directory:</span>
+        <span class="text-neutral-900 dark:text-white font-mono">./covers</span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-neutral-600 dark:text-neutral-400">Database:</span>
+        <span class="text-neutral-900 dark:text-white font-mono">SQLite</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function reextractMetadata() {
+    const btn = document.getElementById('reextractBtn');
+    const status = document.getElementById('reextractStatus');
+    
+    if (!confirm('Re-extract metadata for all books? This may take a few minutes depending on the number of books.')) {
+      return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
+    status.textContent = 'Starting metadata extraction...';
+    
+    try {
+      const response = await fetch('/settings/reextract-metadata', {
+        method: 'POST'
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        status.textContent = `Completed: ${result.updatedCount} books updated, ${result.errorCount} errors`;
+        status.className = 'text-sm text-green-600 dark:text-green-400';
+        
+        if (result.updatedCount > 0) {
+          setTimeout(() => {
+            if (confirm('Metadata extraction complete. Reload the page to see changes?')) {
+              window.location.href = '/admin';
+            }
+          }, 1000);
+        }
+      } else {
+        status.textContent = 'Failed to re-extract metadata';
+        status.className = 'text-sm text-red-600 dark:text-red-400';
+      }
+    } catch (error) {
+      console.error('Error re-extracting metadata:', error);
+      status.textContent = 'Error: Failed to re-extract metadata';
+      status.className = 'text-sm text-red-600 dark:text-red-400';
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i> Re-extract Metadata';
+    }
+  }
+
+  async function syncSeries() {
+    const btn = document.getElementById('syncBtn');
+    const status = document.getElementById('seriesStatus');
+    
+    if (!confirm('Sync series to collections? This will create collections for all series found in your books.')) {
+      return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
+    status.textContent = 'Syncing series...';
+    
+    try {
+      const response = await fetch('/collections/sync-series', {
+        method: 'POST'
+      });
+      
+      if (response.ok) {
+        status.textContent = 'Series synced successfully';
+        status.className = 'text-sm text-green-600 dark:text-green-400';
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        status.textContent = 'Failed to sync series';
+        status.className = 'text-sm text-red-600 dark:text-red-400';
+      }
+    } catch (error) {
+      console.error('Error syncing series:', error);
+      status.textContent = 'Error: Failed to sync series';
+      status.className = 'text-sm text-red-600 dark:text-red-400';
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i> Sync Series to Collections';
+    }
+  }
+
+  async function cleanupCollections() {
+    const btn = document.getElementById('cleanupBtn');
+    const status = document.getElementById('seriesStatus');
+    
+    if (!confirm('Cleanup single book collections? This will delete all collections that have 1 or fewer books.')) {
+      return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
+    status.textContent = 'Cleaning up collections...';
+    
+    try {
+      const response = await fetch('/collections/cleanup', {
+        method: 'POST'
+      });
+      
+      if (response.ok) {
+        status.textContent = 'Cleanup completed successfully';
+        status.className = 'text-sm text-green-600 dark:text-green-400';
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        status.textContent = 'Failed to cleanup collections';
+        status.className = 'text-sm text-red-600 dark:text-red-400';
+      }
+    } catch (error) {
+      console.error('Error cleaning up collections:', error);
+      status.textContent = 'Error: Failed to cleanup collections';
+      status.className = 'text-sm text-red-600 dark:text-red-400';
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-trash-alt mr-2"></i> Cleanup Single Books';
+    }
+  }
+</script>

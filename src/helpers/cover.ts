@@ -4,6 +4,7 @@ import mime from "mime-types";
 import fs from "node:fs";
 import { unzipSync } from "fflate";
 import { DOMParser } from "linkedom";
+import { XMLParser } from "fast-xml-parser";
 import { BookInfo } from "../types";
 import { getConfig } from "../config";
 
@@ -51,71 +52,192 @@ export async function getEpubInfo(filePath: string): Promise<BookInfo | null> {
 			new Uint8Array(await Bun.file(filePath).arrayBuffer()),
 		);
 		const rootOPF = file["META-INF/container.xml"];
-		const documentOPF = new DOMParser().parseFromString(
-			new TextDecoder().decode(rootOPF),
-			"text/xml",
-		);
-		const contentOPF = documentOPF
-			.querySelector("rootfile")
-			?.getAttribute("full-path")!;
+
+		// Parse container.xml to find OPF file
+		const parser = new XMLParser({
+			ignoreAttributes: false,
+			attributeNamePrefix: "@_",
+		});
+		const container = parser.parse(new TextDecoder().decode(rootOPF));
+
+		// Handle different container.xml structures
+		let contentOPF;
+		if (container.container?.rootfiles?.rootfile) {
+			contentOPF = container.container.rootfiles.rootfile["@_full-path"];
+		} else if (container.rootfiles?.rootfile) {
+			contentOPF = container.rootfiles.rootfile["@_full-path"];
+		} else {
+			console.error("Could not find rootfile in container.xml");
+			return null;
+		}
+
+		if (!contentOPF) {
+			console.error("Could not find full-path attribute in rootfile");
+			return null;
+		}
+
 		const route = contentOPF.split("/").slice(0, -1).join("/");
 
-		const document = new DOMParser().parseFromString(
-			new TextDecoder().decode(file[contentOPF]),
-			"text/xml",
-		);
-		const coverID = document
-			.querySelector("meta[name='cover']")
-			?.getAttribute("content");
-		const converRoute = path
-			.join(
-				route,
-				document.querySelector(`item[id='${coverID}']`)?.getAttribute("href")!,
-			)
-			.replace(/\\/g, "/");
-		const coverImage = file[converRoute];
+		// Parse OPF file
+		const opfContent = new TextDecoder().decode(file[contentOPF]);
+		const opfParser = new XMLParser({
+			ignoreAttributes: false,
+			attributeNamePrefix: "@_",
+			ignoreDeclaration: true,
+			parseTagValue: true,
+			trimValues: true,
+		});
+		const opf = opfParser.parse(opfContent);
+
+		// Helper to get value from dc: namespace or direct tag
+		const getDcValue = (tagName: string): string | undefined => {
+			const metadata = opf.package?.metadata;
+			if (!metadata) return undefined;
+
+			// Helper to extract text from object or return string
+			const extractText = (value: any): string | undefined => {
+				if (!value) return undefined;
+				if (typeof value === "string") return value;
+				if (typeof value === "object" && value["#text"]) return value["#text"];
+				// Skip objects that don't have #text (like complex identifier objects)
+				if (typeof value === "object") return undefined;
+				return String(value);
+			};
+
+			// Try with dc: prefix first
+			const dcKey = `dc:${tagName}`;
+			if (metadata[dcKey]) {
+				const value = metadata[dcKey];
+				if (Array.isArray(value)) {
+					return value.map(extractText).filter(Boolean).join(", ");
+				}
+				return extractText(value);
+			}
+
+			// Try without prefix
+			if (metadata[tagName]) {
+				const value = metadata[tagName];
+				if (Array.isArray(value)) {
+					return value.map(extractText).filter(Boolean).join(", ");
+				}
+				return extractText(value);
+			}
+
+			return undefined;
+		};
+
+		// Helper to get meta property value
+		const getMetaValue = (property: string): string | undefined => {
+			const metadata = opf.package?.metadata;
+			if (!metadata) return undefined;
+
+			const metas = metadata.meta || [];
+			const opfMetas = metadata["opf:meta"] || [];
+
+			// Combine both meta and opf:meta arrays
+			const allMetas = [
+				...(Array.isArray(metas) ? metas : [metas].filter(Boolean)),
+				...(Array.isArray(opfMetas) ? opfMetas : [opfMetas].filter(Boolean)),
+			];
+
+			for (const m of allMetas) {
+				if (!m) continue;
+				if (m["@_property"] === property || m.property === property) {
+					return m["@_content"] || m["#text"] || m.content;
+				}
+			}
+
+			return undefined;
+		};
+
+		// Helper to get meta with name attribute
+		const getMetaByName = (name: string): string | undefined => {
+			const metadata = opf.package?.metadata;
+			if (!metadata) return undefined;
+
+			const metas = metadata.meta || [];
+			if (!Array.isArray(metas)) {
+				if (metas["@_name"] === name) return metas["@_content"];
+				return undefined;
+			}
+
+			const found = metas.find((m: any) => m["@_name"] === name);
+			return found ? found["@_content"] : undefined;
+		};
+
+		// Extract cover
+		const coverID = getMetaByName("cover");
+		let coverImage: Uint8Array | Buffer | undefined = undefined;
+
+		if (coverID) {
+			const manifest = opf.package?.manifest?.item || [];
+			const coverItem = Array.isArray(manifest)
+				? manifest.find((i: any) => i["@_id"] === coverID)
+				: manifest;
+			if (coverItem && coverItem["@_href"]) {
+				const coverPath = path
+					.join(route, coverItem["@_href"])
+					.replace(/\\/g, "/");
+				coverImage = file[coverPath];
+			}
+		}
+
+		// Fallback: look for item with cover-image property
+		if (!coverImage) {
+			const manifest = opf.package?.manifest?.item || [];
+			const coverItem = Array.isArray(manifest)
+				? manifest.find((i: any) => i["@_properties"] === "cover-image")
+				: manifest;
+			if (coverItem && coverItem["@_href"]) {
+				const coverPath = path
+					.join(route, coverItem["@_href"])
+					.replace(/\\/g, "/");
+				coverImage = file[coverPath];
+			}
+		}
+
+		// Decode HTML entities
+		const decodeEntities = (text: any): string | undefined => {
+			if (!text) return undefined;
+			// Convert to string if it's an object
+			let strText: string;
+			if (typeof text === "string") {
+				strText = text;
+			} else if (typeof text === "object" && text["#text"]) {
+				strText = text["#text"];
+			} else {
+				strText = String(text);
+			}
+			return strText
+				.replace(/&lt;/g, "<")
+				.replace(/&gt;/g, ">")
+				.replace(/&amp;/g, "&")
+				.replace(/&quot;/g, '"')
+				.replace(/&apos;/g, "'");
+		};
 
 		const bookInfo: BookInfo = {
-			title: document.querySelector("dc\\:title")?.textContent,
-			creator: document.querySelector("dc\\:creator")?.textContent,
-			identifier: document.querySelector("dc\\:identifier")?.textContent,
-			language: document.querySelector("dc\\:language")?.textContent,
-			publisher: document.querySelector("dc\\:publisher")?.textContent,
-			subject: document.querySelector("dc\\:subject")?.textContent,
-			description:
-				document.querySelector("dc\\:description")?.textContent ||
-				document.querySelector("description")?.textContent,
-			date: document.querySelector("dc\\:date")?.textContent,
+			title: decodeEntities(getDcValue("title")),
+			creator: decodeEntities(getDcValue("creator")),
+			identifier: decodeEntities(getDcValue("identifier")),
+			language: decodeEntities(getDcValue("language")),
+			publisher: decodeEntities(getDcValue("publisher")),
+			subject: decodeEntities(getDcValue("subject")),
+			description: decodeEntities(getDcValue("description")),
+			date: decodeEntities(getDcValue("date")),
 			cover: coverImage,
-			// Try new Calibre format first
 			series:
-				document.querySelector("meta[property='belongs-to-collection']")
-					?.textContent ||
-				document.querySelector("opf\\:meta[property='belongs-to-collection']")
-					?.textContent ||
-				// Fallback to old Calibre format
-				document
-					.querySelector("meta[name='calibre:series']")
-					?.getAttribute("content") ||
-				document
-					.querySelector("meta[property='calibre:series']")
-					?.getAttribute("content"),
-			seriesIndex:
-				document.querySelector("meta[property='group-position']")
-					?.textContent ||
-				document.querySelector("opf\\:meta[property='group-position']")
-					?.textContent ||
-				// Fallback to old Calibre format
-				document
-					.querySelector("meta[name='calibre:series_index']")
-					?.getAttribute("content") ||
-				document
-					.querySelector("meta[property='calibre:series_index']")
-					?.getAttribute("content"),
+				getMetaValue("belongs-to-collection") || getMetaValue("calibre:series"),
+			seriesIndex: String(
+				getMetaValue("group-position") ||
+					getMetaValue("calibre:series_index") ||
+					"",
+			),
 		};
 
 		return bookInfo;
 	} catch (e) {
+		console.error("Error parsing EPUB metadata:", e);
 		return null;
 	}
 }

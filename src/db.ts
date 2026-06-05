@@ -207,6 +207,105 @@ export async function getCollection(id: number): Promise<Collection | null> {
 	return obj as Collection;
 }
 
+export async function syncSeriesToCollections(): Promise<number> {
+	const db = await getDb();
+
+	// Get all unique series names from books that have more than 1 book
+	const seriesResult = db.exec(`
+		SELECT series, COUNT(*) as book_count 
+		FROM books 
+		WHERE series IS NOT NULL AND series != '' 
+		GROUP BY series 
+		HAVING book_count > 1
+	`);
+
+	if (seriesResult.length === 0) return 0;
+
+	const seriesData = seriesResult[0].values.map((row: any[]) => ({
+		name: row[0] as string,
+		count: row[1] as number,
+	}));
+	let collectionsCreated = 0;
+
+	for (const { name: seriesName, count } of seriesData) {
+		// Check if collection already exists
+		const existing = db.exec("SELECT id FROM collections WHERE name = ?", [
+			seriesName,
+		]);
+
+		let collectionId: number;
+		if (existing.length === 0) {
+			// Create new collection
+			db.run("INSERT INTO collections (name, description) VALUES (?, ?)", [
+				seriesName,
+				`Automatic collection for ${seriesName} series (${count} books)`,
+			]);
+			const result = db.exec("SELECT last_insert_rowid() as id")[0];
+			collectionId = result.values[0][0] as number;
+			collectionsCreated++;
+		} else {
+			collectionId = existing[0].values[0][0] as number;
+		}
+
+		// Get all books in this series
+		const booksResult = db.exec("SELECT filename FROM books WHERE series = ?", [
+			seriesName,
+		]);
+
+		if (booksResult.length > 0) {
+			const bookFilenames = booksResult[0].values.map(
+				(row: any[]) => row[0] as string,
+			);
+
+			// Add books to collection
+			for (const filename of bookFilenames) {
+				// Check if already in collection
+				const existingRelation = db.exec(
+					"SELECT * FROM book_collections WHERE book_filename = ? AND collection_id = ?",
+					[filename, collectionId],
+				);
+
+				if (existingRelation.length === 0) {
+					db.run(
+						"INSERT INTO book_collections (book_filename, collection_id) VALUES (?, ?)",
+						[filename, collectionId],
+					);
+				}
+			}
+		}
+	}
+
+	await saveDb();
+	return collectionsCreated;
+}
+
+export async function cleanupSingleBookCollections(): Promise<number> {
+	const db = await getDb();
+
+	// Get collections that have only 1 book
+	const result = db.exec(`
+		SELECT c.id, c.name, COUNT(bc.book_filename) as book_count
+		FROM collections c
+		LEFT JOIN book_collections bc ON c.id = bc.collection_id
+		GROUP BY c.id
+		HAVING book_count <= 1
+	`);
+
+	if (result.length === 0) return 0;
+
+	const collectionIds = result[0].values.map((row: any[]) => row[0] as number);
+	let deletedCount = 0;
+
+	for (const id of collectionIds) {
+		// Delete the collection (cascade will handle book_collections)
+		db.run("DELETE FROM collections WHERE id = ?", [id]);
+		deletedCount++;
+	}
+
+	await saveDb();
+	return deletedCount;
+}
+
 export async function updateCollection(
 	id: number,
 	name: string,
@@ -349,7 +448,9 @@ export async function getBookMetadata(
 	const row = result[0].values[0];
 	const obj: any = {};
 	columns.forEach((col: string, i: number) => {
-		obj[col] = row[i];
+		// Convert snake_case to camelCase for series_index
+		const key = col === "series_index" ? "seriesIndex" : col;
+		obj[key] = row[i];
 	});
 	return obj as BookMetadata;
 }
@@ -364,7 +465,9 @@ export async function getAllBookMetadata(): Promise<BookMetadata[]> {
 	return result[0].values.map((row: any[]) => {
 		const obj: any = {};
 		columns.forEach((col: string, i: number) => {
-			obj[col] = row[i];
+			// Convert snake_case to camelCase for series_index
+			const key = col === "series_index" ? "seriesIndex" : col;
+			obj[key] = row[i];
 		});
 		return obj as BookMetadata;
 	});

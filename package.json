@@ -4,10 +4,11 @@
 	"description": "OPDS Server using Bun + Hono",
 	"main": "src/index.ts",
 	"scripts": {
-		"dev": "concurrently \"bun run --hot src/index.ts\" \"bun run watch:css\"",
+		"dev": "concurrently --prefix-colors \"blue,green\" --prefix \"[{name}]\" \"bun run --hot src/index.ts\" \"bun run watch:css > /dev/null 2>&1\"",
 		"build:css": "bunx @tailwindcss/cli -i ./static/styles/index.css -o ./static/styles/app.css",
 		"watch:css": "bunx @tailwindcss/cli -i ./static/styles/index.css -o ./static/styles/app.css --watch",
-		"start": "bun run src/index.ts"
+		"start": "bun run src/index.ts",
+		"test": "bun test"
 	},
 	"dependencies": {
 		"@tailwindcss/postcss": "^4.1.18",

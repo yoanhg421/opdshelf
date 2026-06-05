@@ -68,8 +68,17 @@ export const formatSize = (bytes: number): string => {
 
 export const getBooks = async (dir: string): Promise<Book[]> => {
 	try {
+		// Ensure directory exists (handle race conditions in container environments)
 		if (!fs.existsSync(dir)) {
-			await fs.promises.mkdir(dir, { recursive: true });
+			try {
+				await fs.promises.mkdir(dir, { recursive: true });
+			} catch (e) {
+				// Directory might have been created by another process or mount
+				if (!fs.existsSync(dir)) {
+					console.error(`Failed to create directory ${dir}:`, e);
+					return [];
+				}
+			}
 			return [];
 		}
 
@@ -200,7 +209,7 @@ export const getBooks = async (dir: string): Promise<Book[]> => {
 								identifier = metadata.identifier;
 								subject = metadata.subject;
 								series = metadata.series;
-								seriesIndex = metadata.seriesIndex;
+								seriesIndex = String(metadata.seriesIndex || "");
 								// Save cover image if it exists and not already saved
 								if (metadata.cover && !(await coverExists(file))) {
 									await saveCoverImage(file, metadata.cover);

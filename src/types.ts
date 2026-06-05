@@ -36,4 +36,6 @@ export interface BookInfo {
 	description?: string;
 	date?: string;
 	cover?: Buffer | Uint8Array;
+	series?: string;
+	seriesIndex?: string | number;
 }

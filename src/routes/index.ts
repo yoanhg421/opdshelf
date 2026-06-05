@@ -8,6 +8,7 @@ import { SortMode } from "../types";
 import books from "./book";
 import user from "./user";
 import collections from "./collections";
+import settings from "./settings";
 import { renderView, renderXml } from "../helpers/renderers";
 import { getBaseUrl } from "../helpers/general";
 import { registerHandlebarsHelpers } from "../helpers/handlebars";
@@ -47,6 +48,7 @@ app.use("*", async (c, next) => {
 app.route("/book/", books);
 app.route("/user", user);
 app.route("/collections", collections);
+app.route("/settings", settings);
 
 app.get("/", async (c) => {
 	let books = await getBooks(config.BOOKS_DIR);

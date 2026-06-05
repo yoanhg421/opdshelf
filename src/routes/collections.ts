@@ -12,6 +12,8 @@ import {
 	getBooksInCollection,
 	getBookCollections,
 	saveDb,
+	syncSeriesToCollections,
+	cleanupSingleBookCollections,
 } from "../db";
 import { getBooks, sortBooks } from "../utils";
 import { SortMode } from "../types";
@@ -85,6 +87,18 @@ app.get("/:id/opds", async (c) => {
 		"application/atom+xml;charset=utf-8;profile=opds-catalog;kind=acquisition",
 	);
 	return c.body(xml);
+});
+
+// Sync series to collections (must come before /:id)
+app.post("/sync-series", async (c) => {
+	const created = await syncSeriesToCollections();
+	return c.redirect("/collections");
+});
+
+// Cleanup single book collections
+app.post("/cleanup", async (c) => {
+	const deleted = await cleanupSingleBookCollections();
+	return c.redirect("/collections");
 });
 
 // View a specific collection
