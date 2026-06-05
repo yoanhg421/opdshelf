@@ -20,7 +20,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOST=0.0.0.0
-ENV BOOKS_DIR=/app/books
+ENV BOOKS_DIR=./books
 
 # Copy built files
 COPY --from=builder /app/src ./src
@@ -29,14 +29,14 @@ COPY --from=builder /app/static ./static
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 
-# Create books directory
-RUN mkdir -p /app/books
+# Create directories
+RUN mkdir -p /app/books /app/covers
 
 # Expose the port
 EXPOSE 3000
 
-# Create volume for persistent storage of books
-VOLUME ["/app/books"]
+# Create volumes for persistent storage
+VOLUME ["/app/books", "/app/covers", "/app/data"]
 
 # Run the application
 CMD ["bun", "run", "src/index.ts"]

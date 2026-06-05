@@ -1,42 +1,17 @@
 <div class="space-y-8 animate-fade-in-up">
-  <!-- Upload Section -->
-  <div class="theme-card p-8 text-center transition-transform hover:scale-[1.01] duration-300">
-
-    <form action="/book/upload" method="post" enctype="multipart/form-data" id="uploadForm">
-      <div id="dropZone"
-        class="group cursor-pointer rounded-2xl border-2 border-dashed border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50 py-12 px-6 transition-all duration-300 hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/10 dark:hover:border-primary-500">
-        <div class="flex flex-col items-center space-y-4">
-          <div
-            class="p-4 bg-white dark:bg-neutral-800 rounded-full shadow-sm group-hover:scale-110 group-hover:text-primary-600 transition-all duration-300">
-            <i
-              class="fas fa-cloud-upload-alt text-4xl text-neutral-400 group-hover:text-primary-600 dark:text-neutral-500"></i>
-          </div>
-          <div class="space-y-2">
-            <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Upload a Book</h3>
-            <p class="text-sm text-neutral-500 dark:text-neutral-400 max-w-sm mx-auto">
-              Support for EPUB, PDF, FB2, MOBI, AZW, CBZ, CBR, DJVU, RTF, TXT
-            </p>
-          </div>
-          <button type="button" class="btn-primary mt-4"
-            onclick="document.getElementById('book').click(); event.stopPropagation();">
-            Choose File
-          </button>
-          <div id="fileInfo"
-            class="hidden mt-4 text-sm font-medium text-primary-600 bg-primary-50 dark:bg-primary-900/20 px-4 py-2 rounded-full animate-fade-in">
-          </div>
-        </div>
-      </div>
-      <input type="file" id="book" name="book"
-        accept=".epub,.pdf,.fb2,.fb2.zip,.cbz,.cbr,.cb7,.mobi,.azw,.azw3,.azw4,.djvu,.txt,.rtf,.html,.htm" required
-        class="hidden" onclick="event.stopPropagation();" />
-    </form>
+  <!-- Upload Button -->
+  <div class="flex justify-between items-center">
+    <h2 class="text-2xl font-bold text-neutral-900 dark:text-white">Library Collection <span id="booksCount"
+        class="text-sm font-normal text-neutral-500 ml-2">({{len books}} books)</span></h2>
+    <button id="openUploadModal" class="btn-primary inline-flex items-center gap-2">
+      <i class="fas fa-plus"></i>
+      Upload Books
+    </button>
   </div>
 
   <!-- Book Collection -->
   <div>
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-      <h2 class="text-2xl font-bold text-neutral-900 dark:text-white">Library Collection <span id="booksCount"
-          class="text-sm font-normal text-neutral-500 ml-2">({{len books}} books)</span></h2>
       <div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
         <div class="relative flex-grow sm:w-64">
           <input type="text" id="bookSearch" placeholder="Search books..." class="input-field">
@@ -44,9 +19,9 @@
         </div>
         <div class="relative">
           <select id="bookSort" class="input-field appearance-none cursor-pointer pr-10">
-            <option value="name-asc" {{#if (eq sortMode "name-asc" )}}selected{{/if}}>Name (A-Z)</option>
+            <option value="name-asc" {{#if (or (eq sortMode "" ) (eq sortMode "name-asc" ))}}selected{{/if}}>Name (A-Z)</option>
             <option value="name-desc" {{#if (eq sortMode "name-desc" )}}selected{{/if}}>Name (Z-A)</option>
-            <option value="date-desc" {{#if (or (eq sortMode "" ) (eq sortMode "date-desc" ))}}selected{{/if}}>Newest
+            <option value="date-desc" {{#if (eq sortMode "date-desc" )}}selected{{/if}}>Newest
               First</option>
             <option value="date-asc" {{#if (eq sortMode "date-asc" )}}selected{{/if}}>Oldest First</option>
           </select>
@@ -60,35 +35,38 @@
     {{#if books}}
     <div id="booksGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
       {{#each books}}
-      <div data-title="{{this.title}}" data-added="{{this.lastUpdated}}"
-        class="book-card dark:bg-dark-card bg-light-card group relative overflow-hidden hover:shadow-lg flex flex-col h-full focus:outline-none rounded"
-        tabindex="0"
-        onmouseover="document.getElementById('{{this.filename}}').classList.remove('hidden'); document.getElementById('{{this.filename}}').classList.add('flex')"
-        onmouseout="document.getElementById('{{this.filename}}').classList.add('hidden'); document.getElementById('{{this.filename}}').classList.remove('flex')">
+      <div data-title="{{this.title}}" data-added="{{this.lastUpdated}}" data-filename="{{this.filename}}"
+        data-author="{{this.author}}" data-description="{{this.description}}" data-publisher="{{this.publisher}}"
+        data-language="{{this.language}}" data-identifier="{{this.identifier}}" data-subject="{{this.subject}}"
+        data-series="{{this.series}}" data-series-index="{{this.seriesIndex}}"
+        class="book-card dark:bg-dark-card bg-light-card group relative overflow-hidden hover:shadow-lg flex flex-col h-full focus:outline-none rounded cursor-pointer"
+        tabindex="0">
 
         <!-- Cover Image -->
         <div class="aspect-[2/3] relative overflow-hidden bg-neutral-100 dark:bg-neutral-800">
-          <img src="/book/cover/{{this.filename}}" class="w-full h-full object-cover" alt="{{this.title}}"
-            loading="lazy" onerror="this.onerror=null;this.src='/static/no-cover-error.svg';">
+          <button class="book-view-details block w-full h-full" data-filename="{{this.filename}}">
+            <img src="/book/cover/{{this.filename}}" class="w-full h-full object-cover" alt="{{this.title}}"
+              loading="lazy" onerror="this.onerror=null;this.src='/static/no-cover-error.svg';">
+          </button>
 
-          <!-- Overlay Actions -->
-          <div class="flex flex-1 absolute bottom-0 w-full bg-light-card dark:bg-dark-card hidden"
-            id="{{this.filename}}">
-            <button onclick="openRenameModal('{{this.filename}}')"
-              class="py-2 flex-1 text-center text-primary-600 hover:bg-primary-600 hover:text-white  cursor-pointer"
-              title="Edit Filename">
+          <!-- Menu Button -->
+          <button class="book-menu-btn absolute top-2 right-2 p-2 bg-black/50 hover:bg-black/70 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            title="More options">
+            <i class="fas fa-ellipsis-v"></i>
+          </button>
+
+          <!-- Context Menu -->
+          <div class="book-context-menu absolute top-10 right-2 bg-white dark:bg-neutral-800 rounded-lg shadow-lg hidden z-20 min-w-[150px]">
+            <button class="book-edit-metadata w-full text-left px-4 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 flex items-center gap-2"
+              title="Edit Metadata">
               <i class="fas fa-edit"></i>
+              Edit Metadata
             </button>
-            <a href="/book/info/{{this.filename}}"
-              class="py-2 flex-1 text-center text-primary-600 hover:bg-primary-500 hover:text-white  cursor-pointer"
-              title="View Details">
-              <i class="fas fa-eye"></i>
-            </a>
-            <form action="/book/delete/{{this.filename}}" method="post"
-              onsubmit="return confirm('Delete {{this.title}}?');"
-              class="flex-1 text-center text-red-500 hover:bg-red-500 hover:text-white cursor-pointer">
-              <button type="submit" class="cursor-pointer py-2 h-full w-full" title="Delete">
+            <form action="/book/delete/{{this.filename}}" method="post" class="book-delete-form">
+              <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                title="Delete">
                 <i class="fas fa-trash-alt"></i>
+                Delete
               </button>
             </form>
           </div>
@@ -183,12 +161,225 @@
     </form>
   </div>
 </div>
+
+<!-- Upload Modal -->
+<div id="uploadModal"
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden animate-fade-in">
+  <div
+    class="bg-white dark:bg-neutral-800 rounded-xl shadow-2xl p-8 w-full max-w-2xl transform transition-all scale-100">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-xl font-bold text-neutral-900 dark:text-white">Upload Books</h3>
+      <button onclick="closeUploadModal()"
+        class="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+
+    <form action="/book/upload" method="post" enctype="multipart/form-data" id="uploadForm">
+      <div id="dropZone"
+        class="group cursor-pointer rounded-2xl border-2 border-dashed border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50 py-16 px-6 transition-all duration-300 hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/10 dark:hover:border-primary-500">
+        <div class="flex flex-col items-center space-y-4">
+          <div
+            class="p-4 bg-white dark:bg-neutral-800 rounded-full shadow-sm group-hover:scale-110 group-hover:text-primary-600 transition-all duration-300">
+            <i
+              class="fas fa-cloud-upload-alt text-4xl text-neutral-400 group-hover:text-primary-600 dark:text-neutral-500"></i>
+          </div>
+          <div class="space-y-2 text-center">
+            <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Drag & Drop files here</h3>
+            <p class="text-sm text-neutral-500 dark:text-neutral-400">
+              or click to browse
+            </p>
+            <p class="text-xs text-neutral-400 dark:text-neutral-500 mt-2">
+              Support for EPUB, PDF, FB2, MOBI, AZW, CBZ, CBR, DJVU, RTF, TXT
+            </p>
+          </div>
+          <div id="fileInfo"
+            class="hidden mt-4 text-sm font-medium text-primary-600 bg-primary-50 dark:bg-primary-900/20 px-4 py-2 rounded-full animate-fade-in">
+          </div>
+        </div>
+      </div>
+      <input type="file" id="book" name="book" multiple
+        accept=".epub,.pdf,.fb2,.fb2.zip,.cbz,.cbr,.cb7,.mobi,.azw,.azw3,.azw4,.djvu,.txt,.rtf,.html,.htm"
+        class="hidden" />
+      <div class="flex justify-end space-x-3 pt-6">
+        <button type="button" onclick="closeUploadModal()"
+          class="px-4 py-2 rounded-lg text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors">
+          Cancel
+        </button>
+        <button type="submit" id="uploadSubmitBtn" disabled
+          class="px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors shadow-lg shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
+          Upload
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Book Details Modal -->
+<div id="bookDetailsModal"
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden animate-fade-in">
+  <div
+    class="bg-white dark:bg-neutral-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden transform transition-all scale-100 flex flex-col">
+    <div class="flex justify-between items-center p-6 border-b border-neutral-200 dark:border-neutral-700">
+      <h3 class="text-xl font-bold text-neutral-900 dark:text-white">Book Details</h3>
+      <button onclick="closeBookDetailsModal()"
+        class="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+    <div id="bookDetailsContent" class="flex-1 overflow-y-auto p-6">
+      <!-- Content loaded dynamically -->
+    </div>
+  </div>
+</div>
+
+<!-- Edit Metadata Modal -->
+<div id="editMetadataModal"
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden animate-fade-in">
+  <div
+    class="bg-white dark:bg-neutral-800 rounded-xl shadow-2xl p-6 w-full max-w-2xl transform transition-all scale-100 max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-xl font-bold text-neutral-900 dark:text-white">Edit Metadata</h3>
+      <button onclick="closeEditMetadataModal()"
+        class="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+
+    <form action="/book/metadata" method="post" id="editMetadataForm">
+      <input type="hidden" id="editFilename" name="filename" value="">
+      
+      <div class="space-y-4">
+        <div>
+          <label for="editTitle" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Title</label>
+          <input type="text" id="editTitle" name="title" required
+            class="input-field w-full">
+        </div>
+        
+        <div>
+          <label for="editAuthor" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Author</label>
+          <input type="text" id="editAuthor" name="author"
+            class="input-field w-full">
+        </div>
+        
+        <div>
+          <label for="editDescription" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Description</label>
+          <div class="border border-neutral-300 dark:border-neutral-600 rounded-lg overflow-hidden">
+            <div class="bg-neutral-100 dark:bg-neutral-800 border-b border-neutral-300 dark:border-neutral-600 p-2 flex gap-1 flex-wrap">
+              <button type="button" onclick="formatDoc('bold')" class="p-2 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded" title="Bold">
+                <i class="fas fa-bold"></i>
+              </button>
+              <button type="button" onclick="formatDoc('italic')" class="p-2 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded" title="Italic">
+                <i class="fas fa-italic"></i>
+              </button>
+              <button type="button" onclick="formatDoc('underline')" class="p-2 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded" title="Underline">
+                <i class="fas fa-underline"></i>
+              </button>
+              <div class="w-px bg-neutral-300 dark:bg-neutral-600 mx-1"></div>
+              <button type="button" onclick="formatDoc('formatBlock', 'p')" class="p-2 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded" title="Paragraph">
+                <i class="fas fa-paragraph"></i>
+              </button>
+              <button type="button" onclick="formatDoc('formatBlock', 'h3')" class="p-2 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded" title="Heading">
+                <i class="fas fa-heading"></i>
+              </button>
+              <div class="w-px bg-neutral-300 dark:bg-neutral-600 mx-1"></div>
+              <button type="button" onclick="formatDoc('removeFormat')" class="p-2 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded" title="Clear Formatting">
+                <i class="fas fa-eraser"></i>
+              </button>
+              <button type="button" onclick="toggleSourceView()" class="p-2 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded ml-auto" title="View Source">
+                <i class="fas fa-code"></i>
+              </button>
+            </div>
+            <div id="editDescriptionEditor" contenteditable="true" class="bg-white dark:bg-neutral-900 min-h-[200px] p-3 focus:outline-none prose dark:prose-invert max-w-none text-neutral-900 dark:text-neutral-100"></div>
+            <textarea id="editDescriptionSource" class="hidden bg-neutral-900 text-green-400 font-mono text-sm p-3 w-full min-h-[200px] focus:outline-none"></textarea>
+          </div>
+          <textarea id="editDescription" name="description" rows="4" class="hidden"></textarea>
+        </div>
+        
+        <div>
+          <label for="editPublisher" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Publisher</label>
+          <input type="text" id="editPublisher" name="publisher"
+            class="input-field w-full">
+        </div>
+        
+        <div>
+          <label for="editLanguage" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Language</label>
+          <input type="text" id="editLanguage" name="language"
+            class="input-field w-full" placeholder="e.g., en, es, fr">
+        </div>
+        
+        <div>
+          <label for="editIdentifier" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Identifier / ISBN</label>
+          <input type="text" id="editIdentifier" name="identifier"
+            class="input-field w-full">
+        </div>
+        
+        <div>
+          <label for="editSubject" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Subject / Genre</label>
+          <input type="text" id="editSubject" name="subject"
+            class="input-field w-full">
+        </div>
+        
+        <div>
+          <label for="editSeries" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Series</label>
+          <input type="text" id="editSeries" name="series"
+            class="input-field w-full">
+        </div>
+        
+        <div>
+          <label for="editSeriesIndex" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Series Index</label>
+          <input type="text" id="editSeriesIndex" name="seriesIndex"
+            class="input-field w-full" placeholder="e.g., 1, 2, 3">
+        </div>
+      </div>
+      
+      <div class="flex justify-end space-x-3 pt-6">
+        <button type="button" onclick="closeEditMetadataModal()"
+          class="px-4 py-2 rounded-lg text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors">
+          Cancel
+        </button>
+        <button type="submit"
+          class="px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors shadow-lg shadow-primary-500/30">
+          Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
 <script data-total-books="{{len books}}">
   document.addEventListener("DOMContentLoaded", () => {
     const dropZone = document.getElementById("dropZone");
     const fileInput = document.getElementById("book");
     const fileInfo = document.getElementById("fileInfo");
+    const uploadSubmitBtn = document.getElementById("uploadSubmitBtn");
+    const uploadModal = document.getElementById("uploadModal");
+    const openUploadModalBtn = document.getElementById("openUploadModal");
 
+    // Open upload modal
+    if (openUploadModalBtn) {
+      openUploadModalBtn.addEventListener("click", () => {
+        uploadModal.classList.remove("hidden");
+      });
+    }
+
+    // Close upload modal
+    function closeUploadModal() {
+      uploadModal.classList.add("hidden");
+      fileInput.value = "";
+      fileInfo.classList.add("hidden");
+      uploadSubmitBtn.disabled = true;
+    }
+
+    window.closeUploadModal = closeUploadModal;
+
+    // Close modal on click outside
+    uploadModal.addEventListener("click", (e) => {
+      if (e.target === uploadModal) {
+        closeUploadModal();
+      }
+    });
+
+    // Drag and drop handlers
     ["dragenter", "dragover", "dragleave", "drop"].forEach((evt) => {
       dropZone.addEventListener(evt, (e) => {
         e.preventDefault();
@@ -208,7 +399,6 @@
       const files = e.dataTransfer.files;
       if (files.length === 0) return;
 
-      const file = files[0];
       const validTypes = [
         "application/pdf",
         "application/epub+zip",
@@ -229,7 +419,15 @@
       // Regex fallback for files with missing/generic mime
       const extRegex = /\.(epub|pdf|fb2|fb2\.zip|cbz|cbr|cb7|mobi|azw|azw3|azw4|djvu|txt|rtf|html|htm)$/i;
 
-      if (!validTypes.includes(file.type) && !extRegex.test(file.name)) {
+      // Validate all files
+      let validCount = 0;
+      for (const file of files) {
+        if (validTypes.includes(file.type) || extRegex.test(file.name)) {
+          validCount++;
+        }
+      }
+
+      if (validCount === 0) {
         fileInfo.classList.remove("hidden", "bg-primary-50", "text-primary-600");
         fileInfo.classList.add("text-red-600", "bg-red-50");
         fileInfo.textContent = "Invalid format. Supported: EPUB, PDF, FB2, MOBI, AZW, CBZ, CBR, DJVU, TXT, RTF";
@@ -237,12 +435,27 @@
       }
 
       fileInput.files = files;
-      document.getElementById("uploadForm").submit();
+      fileInfo.classList.remove("hidden", "text-red-600", "bg-red-50");
+      fileInfo.classList.add("bg-primary-50", "text-primary-600");
+      fileInfo.textContent = `${validCount} file${validCount > 1 ? 's' : ''} selected`;
+      uploadSubmitBtn.disabled = false;
     });
 
     dropZone.addEventListener("click", () => fileInput.click());
     fileInput.addEventListener("change", () => {
-      document.getElementById("uploadForm").submit();
+      const files = fileInput.files;
+      if (files && files.length > 0) {
+        fileInfo.classList.remove("hidden", "text-red-600", "bg-red-50");
+        fileInfo.classList.add("bg-primary-50", "text-primary-600");
+        fileInfo.textContent = `${files.length} file${files.length > 1 ? 's' : ''} selected`;
+        uploadSubmitBtn.disabled = false;
+      }
+    });
+
+    // Form submission
+    document.getElementById("uploadForm").addEventListener("submit", () => {
+      fileInfo.textContent = "Uploading...";
+      uploadSubmitBtn.disabled = true;
     });
 
   });
@@ -290,6 +503,225 @@
   const booksCount = document.getElementById('booksCount');
   const totalBooks = parseInt(document.currentScript.dataset.totalBooks, 10) || 0;
 
+  // Book card context menu handlers
+  document.querySelectorAll('.book-card').forEach(card => {
+    const menuBtn = card.querySelector('.book-menu-btn');
+    const contextMenu = card.querySelector('.book-context-menu');
+    const editMetadataBtn = card.querySelector('.book-edit-metadata');
+    const deleteForm = card.querySelector('.book-delete-form');
+    const viewDetailsBtn = card.querySelector('.book-view-details');
+    const filename = card.dataset.filename;
+
+    if (menuBtn && contextMenu) {
+      menuBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Close all other menus
+        document.querySelectorAll('.book-context-menu').forEach(menu => {
+          if (menu !== contextMenu) menu.classList.add('hidden');
+        });
+        
+        contextMenu.classList.toggle('hidden');
+      });
+
+      // Close menu when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!contextMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+          contextMenu.classList.add('hidden');
+        }
+      });
+    }
+
+    if (editMetadataBtn && filename) {
+      editMetadataBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        contextMenu.classList.add('hidden');
+        openEditMetadataModal(filename);
+      });
+    }
+
+    if (deleteForm && filename) {
+      deleteForm.addEventListener('submit', (e) => {
+        const title = card.dataset.title || 'this book';
+        if (!confirm(`Delete ${title}?`)) {
+          e.preventDefault();
+        }
+      });
+    }
+
+    if (viewDetailsBtn && filename) {
+      viewDetailsBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openBookDetailsModal(filename);
+      });
+    }
+  });
+
+  // Book details modal
+  const bookDetailsModal = document.getElementById('bookDetailsModal');
+  const bookDetailsContent = document.getElementById('bookDetailsContent');
+
+  async function openBookDetailsModal(filename) {
+    bookDetailsContent.innerHTML = '<div class="flex items-center justify-center h-full"><i class="fas fa-spinner fa-spin text-2xl text-primary-600"></i></div>';
+    bookDetailsModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    try {
+      const response = await fetch(`/book/info/${filename}`);
+      if (response.ok) {
+        const html = await response.text();
+        // Extract the content from the full page (remove the outer wrapper)
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const content = doc.querySelector('.bg-white.dark\\:bg-neutral-800');
+        if (content) {
+          bookDetailsContent.innerHTML = content.innerHTML;
+        } else {
+          bookDetailsContent.innerHTML = '<p class="text-red-600">Failed to load book details</p>';
+        }
+      } else {
+        bookDetailsContent.innerHTML = '<p class="text-red-600">Failed to load book details</p>';
+      }
+    } catch (error) {
+      console.error('Error loading book details:', error);
+      bookDetailsContent.innerHTML = '<p class="text-red-600">Failed to load book details</p>';
+    }
+  }
+
+  function closeBookDetailsModal() {
+    bookDetailsModal.classList.add('hidden');
+    document.body.style.overflow = '';
+    bookDetailsContent.innerHTML = '';
+  }
+
+  window.closeBookDetailsModal = closeBookDetailsModal;
+
+  // Close modal on click outside
+  bookDetailsModal.addEventListener('click', (e) => {
+    if (e.target === bookDetailsModal) {
+      closeBookDetailsModal();
+    }
+  });
+
+  // Close modal on escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !bookDetailsModal.classList.contains('hidden')) {
+      closeBookDetailsModal();
+    }
+    if (e.key === 'Escape' && !editMetadataModal.classList.contains('hidden')) {
+      closeEditMetadataModal();
+    }
+  });
+
+  // Edit metadata modal
+  const editMetadataModal = document.getElementById('editMetadataModal');
+  const editMetadataForm = document.getElementById('editMetadataForm');
+  const editDescriptionEditor = document.getElementById('editDescriptionEditor');
+  const editDescriptionSource = document.getElementById('editDescriptionSource');
+  const editDescription = document.getElementById('editDescription');
+  let isSourceView = false;
+
+  // Rich text editor functions
+  window.formatDoc = function(cmd, value = null) {
+    if (isSourceView) return;
+    document.execCommand(cmd, false, value);
+    editDescriptionEditor.focus();
+  };
+
+  window.toggleSourceView = function() {
+    isSourceView = !isSourceView;
+    if (isSourceView) {
+      editDescriptionSource.value = editDescriptionEditor.innerHTML;
+      editDescriptionEditor.classList.add('hidden');
+      editDescriptionSource.classList.remove('hidden');
+    } else {
+      editDescriptionEditor.innerHTML = editDescriptionSource.value;
+      editDescriptionEditor.classList.remove('hidden');
+      editDescriptionSource.classList.add('hidden');
+    }
+  };
+
+  async function openEditMetadataModal(filename) {
+    const card = document.querySelector(`.book-card[data-filename="${filename}"]`);
+    if (!card) return;
+
+    // Populate form with current metadata
+    document.getElementById('editFilename').value = filename;
+    document.getElementById('editTitle').value = card.dataset.title || '';
+    document.getElementById('editAuthor').value = card.dataset.author || '';
+    
+    // Handle description HTML
+    const description = card.dataset.description || '';
+    editDescriptionEditor.innerHTML = description;
+    editDescriptionSource.value = description;
+    editDescription.value = description;
+    
+    document.getElementById('editPublisher').value = card.dataset.publisher || '';
+    document.getElementById('editLanguage').value = card.dataset.language || '';
+    document.getElementById('editIdentifier').value = card.dataset.identifier || '';
+    document.getElementById('editSubject').value = card.dataset.subject || '';
+    document.getElementById('editSeries').value = card.dataset.series || '';
+    document.getElementById('editSeriesIndex').value = card.dataset.seriesIndex || '';
+
+    // Reset to WYSIWYG view
+    isSourceView = false;
+    editDescriptionEditor.classList.remove('hidden');
+    editDescriptionSource.classList.add('hidden');
+
+    editMetadataModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeEditMetadataModal() {
+    editMetadataModal.classList.add('hidden');
+    document.body.style.overflow = '';
+    editMetadataForm.reset();
+  }
+
+  window.closeEditMetadataModal = closeEditMetadataModal;
+
+  // Close modal on click outside
+  editMetadataModal.addEventListener('click', (e) => {
+    if (e.target === editMetadataModal) {
+      closeEditMetadataModal();
+    }
+  });
+
+  // Handle form submission
+  editMetadataForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // Sync editor content to hidden textarea
+    if (isSourceView) {
+      editDescription.value = editDescriptionSource.value;
+    } else {
+      editDescription.value = editDescriptionEditor.innerHTML;
+    }
+    
+    const formData = new FormData(editMetadataForm);
+    
+    try {
+      const response = await fetch('/book/metadata', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (response.ok) {
+        closeEditMetadataModal();
+        // Reload page to show updated metadata
+        window.location.reload();
+      } else {
+        alert('Failed to update metadata');
+      }
+    } catch (error) {
+      console.error('Error updating metadata:', error);
+      alert('Failed to update metadata');
+    }
+  });
+
   function filterAndSortBooks() {
     if (!booksGrid) return;
 
@@ -301,7 +733,11 @@
     // Filter
     bookCards.forEach(card => {
       const title = (card.dataset.title || '').toLowerCase();
-      if (title.includes(query)) {
+      const author = (card.dataset.author || '').toLowerCase();
+      const subject = (card.dataset.subject || '').toLowerCase();
+      const series = (card.dataset.series || '').toLowerCase();
+      
+      if (title.includes(query) || author.includes(query) || subject.includes(query) || series.includes(query)) {
         card.style.display = '';
         visibleCount++;
       } else {

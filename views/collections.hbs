@@ -1,0 +1,56 @@
+<div class="space-y-8 animate-fade-in-up">
+  <!-- Create Collection Section -->
+  <div class="theme-card p-6 rounded-xl">
+    <h2 class="text-xl font-bold text-neutral-900 dark:text-white mb-4">Create New Collection</h2>
+    <form action="/collections" method="post" class="space-y-4">
+      <div>
+        <label for="collectionName" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Collection Name</label>
+        <input type="text" id="collectionName" name="name" required
+          class="input-field w-full" placeholder="e.g., Science Fiction, To Read, Favorites">
+      </div>
+      <div>
+        <label for="collectionDesc" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Description (optional)</label>
+        <textarea id="collectionDesc" name="description" rows="2"
+          class="input-field w-full" placeholder="Brief description of this collection"></textarea>
+      </div>
+      <button type="submit" class="btn-primary">Create Collection</button>
+    </form>
+  </div>
+
+  <!-- Collections List -->
+  <div>
+    <h2 class="text-2xl font-bold text-neutral-900 dark:text-white mb-6">Your Collections</h2>
+    {{#if collections}}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {{#each collections}}
+      <div class="theme-card p-6 rounded-xl hover:shadow-lg transition-shadow">
+        <div class="flex items-start justify-between mb-3">
+          <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">{{this.name}}</h3>
+          <form action="/collections/{{this.id}}/delete" method="post"
+            onsubmit="return confirm('Delete collection {{this.name}}? This will not delete the books.');">
+            <button type="submit" class="text-red-500 hover:text-red-700 text-sm" title="Delete Collection">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </form>
+        </div>
+        {{#if this.description}}
+        <p class="text-sm text-neutral-600 dark:text-neutral-400 mb-4">{{this.description}}</p>
+        {{/if}}
+        <a href="/collections/{{this.id}}"
+          class="inline-flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 text-sm font-medium">
+          View Collection <i class="fas fa-arrow-right ml-2"></i>
+        </a>
+      </div>
+      {{/each}}
+    </div>
+    {{else}}
+    <div class="text-center py-12 rounded-xl border-2 border-dashed border-neutral-300 dark:border-neutral-700">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-neutral-100 dark:bg-neutral-800 mb-4">
+        <i class="fas fa-folder text-3xl text-neutral-400"></i>
+      </div>
+      <h3 class="text-lg font-medium text-neutral-900 dark:text-white mb-1">No collections yet</h3>
+      <p class="text-neutral-500">Create a collection to organize your books.</p>
+    </div>
+    {{/if}}
+  </div>
+</div>

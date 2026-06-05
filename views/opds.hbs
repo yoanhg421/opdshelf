@@ -7,18 +7,60 @@
   </author>
   <link rel="self" href="{{baseUrl}}" type="application/atom+xml;profile=opds-catalog;kind=navigation" />
   <link rel="start" href="{{baseUrl}}" type="application/atom+xml;profile=opds-catalog;kind=navigation" />
+  <link rel="search" type="application/opensearchdescription+xml" href="{{baseUrl}}/opensearch.xml" />
+
+  <entry>
+    <id>{{baseUrl}}/collections/opds</id>
+    <title>Collections</title>
+    <updated>{{currentTime}}</updated>
+    <content type="text">Browse book collections</content>
+    <link rel="subsection" href="{{baseUrl}}/collections/opds" type="application/atom+xml;profile=opds-catalog;kind=navigation" />
+  </entry>
 
   {{#each books}}
   <entry>
     <id>{{../baseUrl}}/book/{{urlEncode this.filename}}</id>
     <title>{{this.title}}</title>
     <updated>{{this.lastUpdated}}</updated>
+    {{#if this.author}}
+    <author>
+      <name>{{this.author}}</name>
+    </author>
+    {{/if}}
+    {{#if this.description}}
+    <summary type="html"><![CDATA[{{{this.description}}}]]></summary>
+    {{/if}}
+    {{#if this.publisher}}
+    <publisher>
+      <name>{{this.publisher}}</name>
+    </publisher>
+    {{/if}}
+    {{#if this.language}}
+    <dc:language xmlns:dc="http://purl.org/dc/elements/1.1/">{{this.language}}</dc:language>
+    {{/if}}
+    {{#if this.lastUpdated}}
+    <dc:date xmlns:dc="http://purl.org/dc/elements/1.1/">{{this.lastUpdated}}</dc:date>
+    {{/if}}
+    {{#if this.identifier}}
+    <dc:identifier xmlns:dc="http://purl.org/dc/elements/1.1/">{{this.identifier}}</dc:identifier>
+    {{/if}}
+    {{#if this.subject}}
+    <category scheme="http://www.bisg.org/standards/bisac" term="{{this.subject}}" label="{{this.subject}}" />
+    {{/if}}
+    {{#if this.series}}
+    <collection>
+      <name>{{this.series}}</name>
+      {{#if this.seriesIndex}}
+      <position>{{this.seriesIndex}}</position>
+      {{/if}}
+    </collection>
+    {{/if}}
     <link rel="http://opds-spec.org/acquisition" href="{{../baseUrl}}/book/{{urlEncode this.filename}}"
       type="{{this.mimeType}}" length="{{this.size}}" />
     <link rel="http://opds-spec.org/image" href="{{../baseUrl}}/book/cover/{{urlEncode this.filename}}"
       type="image/jpeg" />
     <link rel="http://opds-spec.org/image/thumbnail" href="{{../baseUrl}}/book/cover/{{urlEncode this.filename}}"
-      type="image/jpeg" />
+      type="image/jpeg" width="350" height="525" />
   </entry>
   {{/each}}
 </feed>

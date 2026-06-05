@@ -1,0 +1,22 @@
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:opds="http://opds-spec.org/2010/catalog">
+  <id>{{baseUrl}}/collections/opds</id>
+  <title>Collections</title>
+  <updated>{{currentTime}}</updated>
+  <author>
+    <name>OPDShelf</name>
+  </author>
+  <link rel="self" href="{{baseUrl}}/collections/opds" type="application/atom+xml;profile=opds-catalog;kind=navigation" />
+  <link rel="start" href="{{baseUrl}}" type="application/atom+xml;profile=opds-catalog;kind=navigation" />
+
+  {{#each collections}}
+  <entry>
+    <id>{{../baseUrl}}/collections/{{this.id}}/opds</id>
+    <title>{{this.name}}</title>
+    <updated>{{this.created_at}}</updated>
+    {{#if this.description}}
+    <summary>{{this.description}}</summary>
+    {{/if}}
+    <link rel="subsection" href="{{../baseUrl}}/collections/{{this.id}}/opds" type="application/atom+xml;profile=opds-catalog;kind=acquisition" />
+  </entry>
+  {{/each}}
+</feed>

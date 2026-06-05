@@ -8,12 +8,12 @@
     </a>
   </div>
 
-  <div class=" bg-white dark:bg-neutral-800 rounded-2xl overflow-hidden">
+  <div class="bg-white dark:bg-neutral-800 rounded-2xl overflow-hidden shadow-lg">
     <div class="flex flex-col md:flex-row">
       <!-- Cover Image Section -->
       <div
-        class="w-[128px] md:w-32 lg:w-64 bg-neutral-100 dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-700 flex-shrink-0">
-        <div class="aspect-[2/3] relative group">
+        class="w-full md:w-48 lg:w-64 bg-neutral-100 dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-700 flex-shrink-0">
+        <div class="aspect-[2/3] relative">
           <img src="/book/cover/{{filename}}" alt="{{book.title}}" class="w-full h-full object-cover"
             onerror="this.onerror=null;this.src='/static/no-cover-error.svg';">
         </div>
@@ -22,55 +22,74 @@
       <!-- Details Section -->
       <div class="w-full p-8 flex flex-col">
         <div class="flex-grow">
-          <!-- Title & Author -->
+          <!-- Title -->
           <h1 class="text-3xl font-bold text-neutral-900 dark:text-white mb-2 leading-tight">
             {{#if book.title}}{{book.title}}{{else}}Unknown Title{{/if}}
           </h1>
-          <p class="text-xl text-primary-600 dark:text-primary-400 font-medium mb-6">
-            {{#if book.creator}}{{book.creator}}{{else}}Unknown Author{{/if}}
+          
+          <!-- Author -->
+          <p class="text-xl text-neutral-600 dark:text-neutral-400 font-medium mb-6">
+            {{#if book.creator}}{{book.creator}}{{else}}{{#if book.author}}{{book.author}}{{else}}Unknown Author{{/if}}{{/if}}
           </p>
 
           <!-- Description -->
           {{#if book.description}}
-          <div class="prose dark:prose-invert max-w-none mb-8 text-neutral-600 dark:text-neutral-300">
+          <div class="prose prose-lg dark:prose-invert max-w-none mb-8 text-neutral-700 dark:text-neutral-300 whitespace-pre-line">
             {{{book.description}}}
           </div>
           {{/if}}
 
           <!-- Metadata Grid -->
           <div
-            class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 bg-neutral-50 dark:bg-neutral-800/50 p-6 rounded-xl border border-neutral-100 dark:border-neutral-700">
+            class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8 bg-neutral-50 dark:bg-neutral-800/50 p-6 rounded-xl border border-neutral-200 dark:border-neutral-700">
             {{#if book.publisher}}
             <div>
-              <span class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Publisher</span>
-              <p class="text-neutral-700 dark:text-neutral-200">{{book.publisher}}</p>
+              <span class="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">Publisher</span>
+              <p class="text-neutral-900 dark:text-white font-medium">{{book.publisher}}</p>
             </div>
             {{/if}}
             {{#if book.language}}
             <div>
-              <span class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Language</span>
-              <p class="text-neutral-700 dark:text-neutral-200">{{book.language}}</p>
+              <span class="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">Language</span>
+              <p class="text-neutral-900 dark:text-white font-medium">{{book.language}}</p>
             </div>
             {{/if}}
             {{#if book.date}}
             <div>
-              <span class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Date</span>
-              <p class="text-neutral-700 dark:text-neutral-200">{{book.date}}</p>
+              <span class="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">Date</span>
+              <p class="text-neutral-900 dark:text-white font-medium">{{book.date}}</p>
             </div>
             {{/if}}
             {{#if book.identifier}}
             <div class="sm:col-span-2">
-              <span class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Identifier / ISBN</span>
-              <p class="text-neutral-700 dark:text-neutral-200 font-mono text-sm break-all">{{book.identifier}}</p>
+              <span class="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">Identifier / ISBN</span>
+              <p class="text-neutral-900 dark:text-white font-mono text-sm break-all">{{book.identifier}}</p>
+            </div>
+            {{/if}}
+            {{#if book.subject}}
+            <div class="sm:col-span-2">
+              <span class="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">Subject / Genre</span>
+              <p class="text-neutral-900 dark:text-white font-medium">{{book.subject}}</p>
+            </div>
+            {{/if}}
+            {{#if book.series}}
+            <div class="sm:col-span-2">
+              <span class="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">Series</span>
+              <p class="text-neutral-900 dark:text-white font-medium">
+                {{book.series}}
+                {{#if book.seriesIndex}}
+                <span class="text-neutral-500">(#{{book.seriesIndex}})</span>
+                {{/if}}
+              </p>
             </div>
             {{/if}}
           </div>
         </div>
 
         <!-- Actions -->
-        <div class="flex flex-col sm:flex-row gap-4 mt-auto pt-6">
+        <div class="flex flex-col sm:flex-row gap-4 mt-auto pt-6 border-t border-neutral-200 dark:border-neutral-700">
           <a href="/book/{{filename}}" download
-            class="btn-primary flex-1 text-center justify-center inline-flex items-center px-6 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-semibold">
+            class="btn-primary flex-1 text-center justify-center inline-flex items-center px-6 py-3 rounded-xl font-semibold">
             <i class="fas fa-download mr-2"></i> Download Book
           </a>
         </div>

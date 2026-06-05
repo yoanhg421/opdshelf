@@ -1,0 +1,324 @@
+<div class="space-y-8 animate-fade-in-up">
+  <!-- Collection Header -->
+  <div class="theme-card p-6 rounded-xl">
+    <div class="flex items-start justify-between">
+      <div class="flex-1">
+        <div class="flex items-center gap-3 mb-2">
+          <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">{{collection.name}}</h1>
+          <button id="editCollectionBtn" class="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200">
+            <i class="fas fa-edit"></i>
+          </button>
+        </div>
+        {{#if collection.description}}
+        <p class="text-neutral-600 dark:text-neutral-400">{{collection.description}}</p>
+        {{/if}}
+      </div>
+      <a href="/collections" class="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200">
+        <i class="fas fa-arrow-left"></i> Back to Collections
+      </a>
+    </div>
+
+    <!-- Edit Form (hidden by default) -->
+    <form id="editCollectionForm" action="/collections/{{collection.id}}" method="post" class="hidden mt-4 pt-4 border-t border-neutral-200 dark:border-neutral-800">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Name</label>
+          <input type="text" name="name" value="{{collection.name}}" required class="input-field w-full">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Description</label>
+          <textarea name="description" rows="3" class="input-field w-full">{{collection.description}}</textarea>
+        </div>
+        <div class="flex gap-2">
+          <button type="submit" class="btn-primary">Save</button>
+          <button type="button" id="cancelEditBtn" class="px-4 py-2 bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-600">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Add Books to Collection -->
+  <div class="theme-card p-6 rounded-xl">
+    <h2 class="text-lg font-semibold text-neutral-900 dark:text-white mb-4">Add Books to Collection</h2>
+    <button id="openBookSelector" class="btn-primary w-full">Select Books to Add</button>
+    <p id="selectedBooksInfo" class="text-sm text-neutral-500 mt-2">No books selected</p>
+  </div>
+
+  <!-- Books in Collection -->
+  <div>
+    <h2 class="text-2xl font-bold text-neutral-900 dark:text-white mb-6">
+      Books in Collection <span class="text-sm font-normal text-neutral-500 ml-2">({{len books}} books)</span>
+    </h2>
+    {{#if books}}
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+      {{#each books}}
+      <div class="book-card dark:bg-dark-card bg-light-card group relative overflow-hidden hover:shadow-lg flex flex-col h-full focus:outline-none rounded"
+        tabindex="0">
+        <!-- Cover Image -->
+        <div class="aspect-[2/3] relative overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+          <img src="/book/cover/{{this.filename}}" class="w-full h-full object-cover" alt="{{this.title}}"
+            loading="lazy" onerror="this.onerror=null;this.src='/static/no-cover-error.svg';">
+
+          <!-- Remove Button -->
+          <form action="/collections/{{../collection.id}}/remove" method="post"
+            class="absolute top-2 right-2">
+            <input type="hidden" name="book_filename" value="{{this.filename}}">
+            <button type="submit"
+              class="w-8 h-8 flex items-center justify-center bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+              title="Remove from collection"
+              onclick="return confirm('Remove {{this.title}} from collection?');">
+              <i class="fas fa-times"></i>
+            </button>
+          </form>
+        </div>
+
+        <!-- Content -->
+        <div class="px-4 py-2 flex flex-col flex-grow">
+          <h3 class="font-semibold text-neutral-900 dark:text-white text-sm line-clamp-2 mb-2 leading-tight"
+            title="{{this.title}}">{{this.title}}</h3>
+          <div
+            class="mt-auto flex items-center justify-between text-xs font-medium text-neutral-500 dark:text-neutral-400">
+            <span class="px-2 py-1 rounded bg-neutral-100 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300">
+              {{simpleMime this.mimeType}}
+            </span>
+            <span>{{formatSize this.size}}</span>
+          </div>
+        </div>
+      </div>
+      {{/each}}
+    </div>
+    {{else}}
+    <div class="text-center py-12 rounded-xl border-2 border-dashed border-neutral-300 dark:border-neutral-700">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-neutral-100 dark:bg-neutral-800 mb-4">
+        <i class="fas fa-book text-3xl text-neutral-400"></i>
+      </div>
+      <h3 class="text-lg font-medium text-neutral-900 dark:text-white mb-1">No books in this collection</h3>
+      <p class="text-neutral-500">Add some books to get started.</p>
+    </div>
+    {{/if}}
+  </div>
+</div>
+
+<!-- Book Selection Modal -->
+<div id="bookModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] hidden flex items-center justify-center p-4">
+  <div class="bg-white dark:bg-neutral-900 rounded-2xl w-full max-w-6xl max-h-[90vh] flex flex-col shadow-2xl">
+    <!-- Modal Header -->
+    <div class="p-6 border-b border-neutral-200 dark:border-neutral-800">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-neutral-900 dark:text-white">Select Books</h2>
+        <button id="closeModal" class="w-8 h-8 rounded-full flex items-center justify-center text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-neutral-200 dark:hover:bg-neutral-800 transition-colors">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="flex gap-2">
+        <input type="text" id="bookSearch" placeholder="Search books by title..." 
+          class="input-field flex-1" autocomplete="off">
+        <button type="button" id="selectAllBtn" class="px-4 py-2 bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-600 text-sm">
+          Select All
+        </button>
+        <button type="button" id="clearAllBtn" class="px-4 py-2 bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-600 text-sm">
+          Clear All
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="flex-1 overflow-y-auto p-6">
+      <div id="bookGrid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+        {{#each allBooks}}
+        <div class="book-select-item relative cursor-pointer group" data-filename="{{this.filename}}" data-title="{{this.title}}">
+          <div class="aspect-[2/3] rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-800 relative">
+            <img src="/book/cover/{{this.filename}}" 
+              class="w-full h-full object-cover transition-transform group-hover:scale-105" 
+              alt="{{this.title}}"
+              loading="lazy"
+              onerror="this.onerror=null;this.src='/static/no-cover-error.svg';">
+            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors"></div>
+            <div class="absolute top-2 right-2 w-6 h-6 rounded-full bg-white/90 dark:bg-neutral-800/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity check-indicator">
+              <i class="fas fa-check text-green-600 text-sm hidden"></i>
+            </div>
+          </div>
+          <p class="mt-2 text-xs text-neutral-700 dark:text-neutral-300 line-clamp-2 leading-tight">{{this.title}}</p>
+        </div>
+        {{/each}}
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="p-6 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+      <span id="selectedCount" class="text-sm text-neutral-500">0 books selected</span>
+      <div class="flex gap-2">
+        <button id="cancelBtn" class="px-4 py-2 bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-600">
+          Cancel
+        </button>
+        <button id="addSelectedBtn" class="btn-primary">
+          Add Selected
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const modal = document.getElementById('bookModal');
+  const openBtn = document.getElementById('openBookSelector');
+  const closeBtn = document.getElementById('closeModal');
+  const cancelBtn = document.getElementById('cancelBtn');
+  const addSelectedBtn = document.getElementById('addSelectedBtn');
+  const bookSearch = document.getElementById('bookSearch');
+  const bookGrid = document.getElementById('bookGrid');
+  const selectAllBtn = document.getElementById('selectAllBtn');
+  const clearAllBtn = document.getElementById('clearAllBtn');
+  const selectedCount = document.getElementById('selectedCount');
+  const selectedBooksInfo = document.getElementById('selectedBooksInfo');
+  const editCollectionBtn = document.getElementById('editCollectionBtn');
+  const editCollectionForm = document.getElementById('editCollectionForm');
+  const cancelEditBtn = document.getElementById('cancelEditBtn');
+
+  // Toggle edit form
+  editCollectionBtn.addEventListener('click', () => {
+    editCollectionForm.classList.toggle('hidden');
+  });
+
+  cancelEditBtn.addEventListener('click', () => {
+    editCollectionForm.classList.add('hidden');
+  });
+  
+  const selectedBooks = new Set();
+  const bookItems = document.querySelectorAll('.book-select-item');
+
+  // Open modal
+  openBtn.addEventListener('click', () => {
+    modal.classList.remove('hidden');
+  });
+
+  // Close modal
+  function closeModal() {
+    modal.classList.add('hidden');
+  }
+  closeBtn.addEventListener('click', closeModal);
+  cancelBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  // Toggle book selection
+  bookItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const filename = item.dataset.filename;
+      const checkIcon = item.querySelector('.check-indicator i');
+      
+      if (selectedBooks.has(filename)) {
+        selectedBooks.delete(filename);
+        item.classList.remove('ring-2', 'ring-primary-500');
+        checkIcon.classList.add('hidden');
+      } else {
+        selectedBooks.add(filename);
+        item.classList.add('ring-2', 'ring-primary-500');
+        checkIcon.classList.remove('hidden');
+      }
+      updateCount();
+    });
+  });
+
+  // Search
+  bookSearch.addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase();
+    bookItems.forEach(item => {
+      const title = item.dataset.title.toLowerCase();
+      if (title.includes(query)) {
+        item.style.display = 'block';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+  });
+
+  // Select all visible
+  selectAllBtn.addEventListener('click', () => {
+    bookItems.forEach(item => {
+      if (item.style.display !== 'none') {
+        const filename = item.dataset.filename;
+        selectedBooks.add(filename);
+        item.classList.add('ring-2', 'ring-primary-500');
+        item.querySelector('.check-indicator i').classList.remove('hidden');
+      }
+    });
+    updateCount();
+  });
+
+  // Clear all
+  clearAllBtn.addEventListener('click', () => {
+    selectedBooks.clear();
+    bookItems.forEach(item => {
+      item.classList.remove('ring-2', 'ring-primary-500');
+      item.querySelector('.check-indicator i').classList.add('hidden');
+    });
+    updateCount();
+  });
+
+  // Update count
+  function updateCount() {
+    const count = selectedBooks.size;
+    selectedCount.textContent = `${count} book${count !== 1 ? 's' : ''} selected`;
+    selectedBooksInfo.textContent = count > 0 ? `${count} book${count !== 1 ? 's' : ''} selected` : 'No books selected';
+  }
+
+  // Add selected books
+  addSelectedBtn.addEventListener('click', async () => {
+    if (selectedBooks.size === 0) {
+      alert('Please select at least one book');
+      return;
+    }
+
+    // Disable button and show loading
+    addSelectedBtn.disabled = true;
+    addSelectedBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Adding...';
+    cancelBtn.disabled = true;
+    
+    // Close modal
+    closeModal();
+
+    // Show progress indicator on main page
+    openBtn.disabled = true;
+    openBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Adding books...';
+    selectedBooksInfo.textContent = `Adding ${selectedBooks.size} book${selectedBooks.size !== 1 ? 's' : ''}...`;
+
+    const formData = new FormData();
+    selectedBooks.forEach(filename => {
+      formData.append('book_filename[]', filename);
+    });
+
+    try {
+      const response = await fetch(`/collections/{{collection.id}}/add`, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (response.ok) {
+        window.location.reload();
+      } else {
+        alert('Failed to add books to collection');
+        // Reset UI on error
+        addSelectedBtn.disabled = false;
+        addSelectedBtn.innerHTML = 'Add Selected';
+        cancelBtn.disabled = false;
+        openBtn.disabled = false;
+        openBtn.innerHTML = 'Select Books to Add';
+        selectedBooksInfo.textContent = 'Error adding books';
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error adding books to collection');
+      // Reset UI on error
+      addSelectedBtn.disabled = false;
+      addSelectedBtn.innerHTML = 'Add Selected';
+      cancelBtn.disabled = false;
+      openBtn.disabled = false;
+      openBtn.innerHTML = 'Select Books to Add';
+      selectedBooksInfo.textContent = 'Error adding books';
+    }
+  });
+</script>
