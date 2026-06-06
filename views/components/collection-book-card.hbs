@@ -1,0 +1,38 @@
+<div data-title="{{title}}" data-added="{{lastUpdated}}" data-filename="{{filename}}"
+  data-author="{{author}}" data-description="{{description}}" data-publisher="{{publisher}}"
+  data-language="{{language}}" data-identifier="{{identifier}}" data-subject="{{subject}}"
+  data-series="{{series}}" data-series-index="{{seriesIndex}}"
+  class="book-card dark:bg-dark-card bg-light-card group relative overflow-hidden hover:shadow-lg flex flex-col h-full focus:outline-none rounded-lg cursor-pointer"
+  tabindex="0">
+
+  <!-- Cover Image -->
+  <div class="aspect-[2/3] relative overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+    <img src="/book/cover/{{filename}}" class="w-full h-full object-cover transition-transform group-hover:scale-105" alt="{{title}}"
+      loading="lazy" onerror="this.onerror=null;this.src='/static/no-cover-error.svg';">
+
+    <!-- Remove Button -->
+    <form action="{{removeAction}}" method="post"
+      class="absolute top-2 right-2">
+      <input type="hidden" name="book_filename" value="{{filename}}">
+      <button type="submit"
+        class="w-8 h-8 flex items-center justify-center bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+        title="Remove from collection"
+        onclick="return confirm('Remove {{title}} from collection?');">
+        <i class="fas fa-times"></i>
+      </button>
+    </form>
+  </div>
+
+  <!-- Content -->
+  <div class="px-4 py-2 flex flex-col flex-grow">
+    <h3 class="font-semibold text-neutral-900 dark:text-white text-sm line-clamp-2 mb-2 leading-tight"
+      title="{{title}}">{{title}}</h3>
+    <div
+      class="mt-auto flex items-center justify-between text-xs font-medium text-neutral-500 dark:text-neutral-400">
+      <span class="px-2 py-1 rounded bg-neutral-100 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300">
+        {{simpleMime mimeType}}
+      </span>
+      <span>{{formatSize size}}</span>
+    </div>
+  </div>
+</div>

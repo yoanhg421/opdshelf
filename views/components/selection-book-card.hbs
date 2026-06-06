@@ -1,0 +1,11 @@
+<div data-title="{{title}}" data-filename="{{filename}}"
+  class="book-card dark:bg-dark-card bg-light-card group relative overflow-hidden hover:shadow-lg flex flex-col h-full focus:outline-none rounded-lg cursor-pointer"
+  tabindex="0">
+
+  <!-- Cover Image -->
+  <div class="aspect-[2/3] relative overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+    <img src="/book/cover/{{filename}}" class="w-full h-full object-cover transition-transform group-hover:scale-105" alt="{{title}}"
+      loading="lazy" onerror="this.onerror=null;this.src='/static/no-cover-error.svg';">
+
+  </div>
+</div>

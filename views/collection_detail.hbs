@@ -54,39 +54,7 @@
     {{#if books}}
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
       {{#each books}}
-      <div class="book-card dark:bg-dark-card bg-light-card group relative overflow-hidden hover:shadow-lg flex flex-col h-full focus:outline-none rounded"
-        tabindex="0">
-        <!-- Cover Image -->
-        <div class="aspect-[2/3] relative overflow-hidden bg-neutral-100 dark:bg-neutral-800">
-          <img src="/book/cover/{{this.filename}}" class="w-full h-full object-cover" alt="{{this.title}}"
-            loading="lazy" onerror="this.onerror=null;this.src='/static/no-cover-error.svg';">
-
-          <!-- Remove Button -->
-          <form action="/collections/{{../collection.id}}/remove" method="post"
-            class="absolute top-2 right-2">
-            <input type="hidden" name="book_filename" value="{{this.filename}}">
-            <button type="submit"
-              class="w-8 h-8 flex items-center justify-center bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-              title="Remove from collection"
-              onclick="return confirm('Remove {{this.title}} from collection?');">
-              <i class="fas fa-times"></i>
-            </button>
-          </form>
-        </div>
-
-        <!-- Content -->
-        <div class="px-4 py-2 flex flex-col flex-grow">
-          <h3 class="font-semibold text-neutral-900 dark:text-white text-sm line-clamp-2 mb-2 leading-tight"
-            title="{{this.title}}">{{this.title}}</h3>
-          <div
-            class="mt-auto flex items-center justify-between text-xs font-medium text-neutral-500 dark:text-neutral-400">
-            <span class="px-2 py-1 rounded bg-neutral-100 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300">
-              {{simpleMime this.mimeType}}
-            </span>
-            <span>{{formatSize this.size}}</span>
-          </div>
-        </div>
-      </div>
+      {{> collection-book-card (merge this removeAction=(concat "/collections/" ../collection.id "/remove"))}}
       {{/each}}
     </div>
     {{else}}
@@ -129,18 +97,7 @@
       <div id="bookGrid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-4">
         {{#each allBooks}}
         <div class="book-select-item relative cursor-pointer group" data-filename="{{this.filename}}" data-title="{{this.title}}">
-          <div class="aspect-[2/3] rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-800 relative">
-            <img src="/book/cover/{{this.filename}}" 
-              class="w-full h-full object-cover transition-transform group-hover:scale-105" 
-              alt="{{this.title}}"
-              loading="lazy"
-              onerror="this.onerror=null;this.src='/static/no-cover-error.svg';">
-            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors"></div>
-            <div class="absolute top-2 right-2 w-6 h-6 rounded-full bg-white/90 dark:bg-neutral-800/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity check-indicator">
-              <i class="fas fa-check text-green-600 text-sm hidden"></i>
-            </div>
-          </div>
-          <p class="mt-2 text-xs text-neutral-700 dark:text-neutral-300 line-clamp-2 leading-tight">{{this.title}}</p>
+          {{> selection-book-card this}}
         </div>
         {{/each}}
       </div>
@@ -209,14 +166,15 @@
     item.addEventListener('click', () => {
       const filename = item.dataset.filename;
       const checkIcon = item.querySelector('.check-indicator i');
+      const bookCard = item.querySelector('.book-card');
       
       if (selectedBooks.has(filename)) {
         selectedBooks.delete(filename);
-        item.classList.remove('ring-2', 'ring-primary-500');
+        bookCard.classList.remove('ring-2', 'ring-primary-500');
         checkIcon.classList.add('hidden');
       } else {
         selectedBooks.add(filename);
-        item.classList.add('ring-2', 'ring-primary-500');
+        bookCard.classList.add('ring-2', 'ring-primary-500');
         checkIcon.classList.remove('hidden');
       }
       updateCount();
@@ -242,8 +200,9 @@
       if (item.style.display !== 'none') {
         const filename = item.dataset.filename;
         selectedBooks.add(filename);
-        item.classList.add('ring-2', 'ring-primary-500');
-        item.querySelector('.check-indicator i').classList.remove('hidden');
+        const bookCard = item.querySelector('.book-card');
+        bookCard.classList.add('ring-2', 'ring-primary-500');
+        bookCard.querySelector('.check-indicator i').classList.remove('hidden');
       }
     });
     updateCount();
@@ -253,8 +212,9 @@
   clearAllBtn.addEventListener('click', () => {
     selectedBooks.clear();
     bookItems.forEach(item => {
-      item.classList.remove('ring-2', 'ring-primary-500');
-      item.querySelector('.check-indicator i').classList.add('hidden');
+      const bookCard = item.querySelector('.book-card');
+      bookCard.classList.remove('ring-2', 'ring-primary-500');
+      bookCard.querySelector('.check-indicator i').classList.add('hidden');
     });
     updateCount();
   });
