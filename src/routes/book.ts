@@ -33,19 +33,16 @@ app.get("/:filename", async (c) => {
 });
 
 app.post("/upload", async (c) => {
-	const body = await c.req.parseBody();
-	const files = body["book"];
+	const formData = await c.req.formData();
+	const files = formData.getAll("book");
 
-	// Handle single file or multiple files
-	const fileList = Array.isArray(files) ? files : [files];
 	let uploadedCount = 0;
 
-	for (const file of fileList) {
+	for (const file of files) {
 		if (file instanceof File) {
 			if (!file.name) continue;
 
 			const dest = path.join(config.BOOKS_DIR, file.name);
-			console.log(`Uploading ${file.name}`);
 
 			try {
 				await fs.promises.writeFile(
@@ -59,7 +56,6 @@ app.post("/upload", async (c) => {
 		}
 	}
 
-	console.log(`Successfully uploaded ${uploadedCount} file(s)`);
 	return c.redirect("/admin");
 });
 

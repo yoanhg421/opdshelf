@@ -305,6 +305,7 @@
     const uploadSubmitBtn = document.getElementById("uploadSubmitBtn");
     const uploadModal = document.getElementById("uploadModal");
     const openUploadModalBtn = document.getElementById("openUploadModal");
+    const uploadForm = document.getElementById("uploadForm");
 
     // Open upload modal
     if (openUploadModalBtn) {
@@ -404,10 +405,12 @@
     });
 
     // Form submission
-    document.getElementById("uploadForm").addEventListener("submit", () => {
-      fileInfo.textContent = "Uploading...";
-      uploadSubmitBtn.disabled = true;
-    });
+    if (uploadForm) {
+      uploadForm.addEventListener("submit", (e) => {
+        fileInfo.textContent = "Uploading...";
+        uploadSubmitBtn.disabled = true;
+      });
+    }
 
   });
 
